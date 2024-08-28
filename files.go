@@ -8,24 +8,6 @@ import (
 	"strings"
 )
 
-/*
-func readdir(root, path string) ([]file, error) {
-	l, err := ioutil.ReadDir(filepath.Join(root, path))
-	if err != nil {
-		return nil, err
-	}
-	files := []file{}
-	for _, fi := range l {
-		switch fi.Name() {
-		case "cache", "bot", "prv", "cache.log":
-			continue
-		}
-		files = append(files, &file(filepath.Join(path, fi.Name())))
-	}
-	return files, nil
-}
-*/
-
 var cacheDir = regexp.MustCompile(`.*\\/cache\\/[0-9]{3,}`)
 
 func getCached() ([]file, error) {
@@ -116,12 +98,6 @@ func monthFolder(path string) string {
 	}
 	return name
 }
-
-/*
-func (f file) folder() string {
-	return filepath.Base(f.dir())
-}
-*/
 
 func (f file) originalPath() string {
 	path := filepath.Join(

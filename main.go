@@ -3,23 +3,17 @@ package main
 // TODO: there is an issue if one image of an already cached series is deleted. series doesnt show up.
 
 import (
-	//"github.com/nfnt/resize"
-	//"github.com/disintegration/imaging"
-	//"image"
-	//"image/jpeg"
+	"flag"
 	"fmt"
+	"log"
+	"math"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-
-	//"rd"
-	"flag"
-	"log"
-	"math"
-	"os/signal"
-	"regexp"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -208,8 +202,6 @@ func cacheImage(f file, opt *options) error {
 			if err != nil {
 				return err
 			}
-
-			//fmt.Printf("cached %v ->\n       %v \n", f.rel(), rel(f.cacheFile(size)))
 			continue
 		}
 		fmt.Printf("skipping %v\t(%v)\talready cached\n", f.rel(), size)
@@ -461,42 +453,6 @@ func renameImage(f file) (file, error) {
 	fmt.Printf("renamed %v to\n-> %v\n", f.base(), nf.base())
 	return nf, os.Rename(f.path(), nf.path())
 }
-
-/*
-func renameImage(f file) (file, error) {
-	// TODO: adapt for formats with and without nano seconds
-	if len(f.Name()) < len("IMG_20160102_150405.jpg") {
-		return nil, fmt.Errorf("could not rename image: unexpected filename. %v", f.Name())
-	}
-	println(f.Name())
-	nn := f.Name()[6:6+13] + f.Ext()
-	nn = strings.Replace(nn, "_24", "_00", -1)
-	nf := &File{
-		Path: filepath.Join(f.Dir(), nn),
-	}
-	fmt.Printf("renamed %v\n", f.Path)
-	return nf, os.Rename(f.Abs(), nf.Abs())
-}
-*/
-
-/*
-// found this on the internet and modified it.
-func round(val float64) uint {
-	var roundn float64
-	roundOn := 0.5
-	places := 0
-	pow := math.Pow(10, float64(places))
-	digit := pow * val
-	_, div := math.Modf(digit)
-	if div >= roundOn {
-		roundn = math.Ceil(digit)
-	} else {
-		roundn = math.Floor(digit)
-	}
-	newVal := roundn / pow
-	return uint(newVal)
-}
-*/
 
 func readExifDate(fname string) (string, error) {
 	f, err := os.Open(fname)
