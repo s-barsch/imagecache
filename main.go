@@ -61,12 +61,9 @@ var sharpen = map[int]float64{
 }
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
-var rootl int
 
 func cacheImages(paths []string, opt *options) error {
 	for _, root := range paths {
-		// not ideal but okay for now
-		rootl = len(root)
 		err := cacheOriginals(root, opt)
 		if err != nil {
 			return err

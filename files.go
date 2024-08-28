@@ -65,10 +65,6 @@ func (f file) pathWebP() string {
 	return strings.Replace(f.path(), ".jpg", ".webp", 1)
 }
 
-func (f file) rel() string {
-	return rel(f.path())
-}
-
 func (f file) base() string {
 	return filepath.Base(f.path())
 }

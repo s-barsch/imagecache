@@ -23,7 +23,7 @@ func cacheImage(f file, opt *options) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("created dims file %v\n", rel(f.dimsFile()))
+		fmt.Printf("created dims file %v\n", cap(f.dimsFile()))
 	}
 
 	for _, size := range sizes {
@@ -43,7 +43,7 @@ func cacheImage(f file, opt *options) error {
 			}
 			continue
 		}
-		fmt.Printf("skipping %v\t(%v)\talready cached\n", f.rel(), size)
+		fmt.Printf("skipping %v\t(%v)\talready cached\n", cap(f.path()), size)
 	}
 
 	return nil
@@ -132,7 +132,7 @@ func (f file) createCacheFile(size int) error {
 		return err
 	}
 
-	fmt.Printf("cached \t %v\t(%v)\n", f.rel(), size)
+	fmt.Printf("cached \t %v\t(%v)\n", cap(f.path()), size)
 
 	wmw := mw.Clone()
 	err = wmw.SetImageFormat("WEBP")
@@ -158,7 +158,7 @@ func (f file) createCacheFile(size int) error {
 		return err
 	}
 
-	fmt.Printf("cached \t %v\n", rel(f.cacheFileWebP(size)))
+	fmt.Printf("cached \t %v\n", cap(f.cacheFileWebP(size)))
 
 	blur, err := os.Create(f.cacheFileBlur(size))
 	if err != nil {
@@ -191,7 +191,7 @@ func (f file) createCacheFile(size int) error {
 		return err
 	}
 
-	fmt.Printf("cached \t %v\n", rel(f.cacheFileBlur(size)))
+	fmt.Printf("cached \t %v\n", cap(f.cacheFileBlur(size)))
 
 	mw.Destroy()
 	return nil
@@ -224,7 +224,7 @@ func createFolder(path string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("created %v (folder)\n", rel(path))
+		fmt.Printf("created %v (folder)\n", cap(path))
 	}
 	return nil
 }
@@ -286,9 +286,9 @@ func exists(path string) bool {
 	return err == nil
 }
 
-func rel(path string) string {
-	if len(path) > rootl {
-		return path[rootl:]
+func cap(path string) string {
+	if len(path) > 32 {
+		return path[32:]
 	}
 	return path
 }

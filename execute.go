@@ -50,16 +50,16 @@ func deleteCached(root string) error {
 		if !exists(cacheFile.originalPath()) {
 			err = os.Remove(cacheFile.path())
 			if err != nil {
-				fmt.Printf("unsuccesful in deleting %v\n", cacheFile.rel())
+				fmt.Printf("unsuccesful in deleting %v\n", cap(cacheFile.path()))
 				continue
 			}
 			p := cacheFile.pathWebP()
 			err = os.Remove(p)
 			if err != nil {
-				fmt.Printf("unsuccesful in deleting %v\n", rel(p))
+				fmt.Printf("unsuccesful in deleting %v\n", cap(p))
 				continue
 			}
-			fmt.Printf("deleted -- source gone %v\n", rel(p))
+			fmt.Printf("deleted -- source gone %v\n", cap(p))
 		}
 	}
 	return nil
