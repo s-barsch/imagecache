@@ -14,12 +14,12 @@ import (
 )
 
 type Options struct {
-	rerunFolder string
-	rerunSize   int
-	rerunDims   bool
+	RerunFolder string
+	RerunSize   int
+	RerunDims   bool
 }
 
-var abort chan os.Signal
+var Abort chan os.Signal
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 
@@ -44,7 +44,7 @@ func CacheImage(f File, opt *Options) error {
 		return err
 	}
 
-	if !exists(f.dimsFile()) || opt.rerunDims || sourceIsNewer(f, 1600) {
+	if !exists(f.dimsFile()) || opt.RerunDims || sourceIsNewer(f, 1600) {
 		err := f.createDimsFile()
 		if err != nil {
 			return err
@@ -58,11 +58,11 @@ func CacheImage(f File, opt *Options) error {
 			return err
 		}
 		rerunKine := false
-		if x := strings.Index(f.path(), "/kine/"); opt.rerunFolder == "kine" && x != -1 {
+		if x := strings.Index(f.path(), "/kine/"); opt.RerunFolder == "kine" && x != -1 {
 			rerunKine = true
 		}
-		if !exists(f.cacheFile(size)) || size == opt.rerunSize || rerunKine ||
-			isMonth(f.path(), opt.rerunFolder) || sourceIsNewer(f, size) {
+		if !exists(f.cacheFile(size)) || size == opt.RerunSize || rerunKine ||
+			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) {
 			err := f.createCacheFile(size)
 			if err != nil {
 				return err

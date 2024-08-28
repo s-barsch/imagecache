@@ -18,9 +18,9 @@ func main() {
 	flag.Parse()
 
 	opt := &cache.Options{
-		rerunFolder: *rerunFolder,
-		rerunSize:   *rerunSize,
-		rerunDims:   *rerunDims,
+		RerunFolder: *rerunFolder,
+		RerunSize:   *rerunSize,
+		RerunDims:   *rerunDims,
 	}
 
 	cache.Abort = make(chan os.Signal, 1)

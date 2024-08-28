@@ -32,7 +32,7 @@ func CacheOriginals(root string, opt *Options) error {
 	defer imagick.Terminate()
 	for _, f := range files {
 		select {
-		case <-abort:
+		case <-Abort:
 			return fmt.Errorf("PROGRAM INTERRUPTED")
 		default:
 			if f.base() != "cover.jpg" && !validFilename.MatchString(f.base()) {
