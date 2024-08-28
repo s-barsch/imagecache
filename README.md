@@ -1,0 +1,1 @@
+Imagemagick 6 must be installed and accessible
