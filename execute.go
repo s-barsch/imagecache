@@ -12,10 +12,10 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-func cacheOriginals(opt *options) error {
+func cacheOriginals(root string, opt *options) error {
 	// get orig
 	// see if cached
-	files, err := getOriginals()
+	files, err := getOriginals(root)
 	if err != nil {
 		return err
 	}
@@ -41,8 +41,8 @@ func cacheOriginals(opt *options) error {
 	return nil
 }
 
-func deleteCached() error {
-	cacheFiles, err := getCached()
+func deleteCached(root string) error {
+	cacheFiles, err := getCached(root)
 	if err != nil {
 		return err
 	}

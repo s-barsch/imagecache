@@ -8,13 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strings"
 )
-
-// var root = "/srv/rg-s/st/data"
-var root = "/Volumes/External/srv/rg-s/st/data/kine"
-
-// var root = "/Volumes/External/srv/rg-s/st/data/graph"
-var rootl = len(root)
 
 type options struct {
 	rerunFolder string
@@ -25,9 +20,10 @@ type options struct {
 var abort chan os.Signal
 
 func main() {
-	rerunFolder := flag.String("rerun", "", "which folder should be freshly cached? eg: 17-07. write \"all\" for everything.")
-	rerunSize := flag.Int("size", 0, "specify if a specific size should be recached.")
-	rerunDims := flag.Bool("rerunDims", false, "recreate dimension files for all images.")
+	rerunFolder := flag.String("rerun", "", "which folder should be freshly cached? eg: 17-07. write \"all\" for everything")
+	rerunSize := flag.Int("size", 0, "specify if a specific size should be recached")
+	rerunDims := flag.Bool("rerunDims", false, "recreate dimension files for all images")
+	pathsCfg := flag.String("config", "./paths.cfg", "provide path to paths.cfg")
 	flag.Parse()
 
 	opt := &options{
@@ -39,7 +35,13 @@ func main() {
 	abort = make(chan os.Signal, 1)
 	signal.Notify(abort, os.Interrupt)
 
-	err := cacheImages(opt)
+	paths, err := readPaths(*pathsCfg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = cacheImages(paths, opt)
 	fmt.Println(err)
 }
 
@@ -58,14 +60,38 @@ var sharpen = map[int]float64{
 	3200: 0.8,
 }
 
-// var validFilename = regexp.MustCompile("^[0-9]+_[0-9]+.jpg$")
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
+var rootl int
 
-func cacheImages(opt *options) error {
-	err := cacheOriginals(opt)
-	if err != nil {
-		return err
+func cacheImages(paths []string, opt *options) error {
+	for _, root := range paths {
+		// not ideal but okay for now
+		rootl = len(root)
+		err := cacheOriginals(root, opt)
+		if err != nil {
+			return err
+		}
+
+		err = deleteCached(root)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
-	return deleteCached()
+func readPaths(pathsCfg string) ([]string, error) {
+	b, err := os.ReadFile(pathsCfg)
+	if err != nil {
+		return nil, fmt.Errorf("provide a paths.cfg")
+	}
+	lines := strings.Split(string(b), "\n")
+	paths := []string{}
+	for _, l := range lines {
+		if l[0] == '#' {
+			continue
+		}
+		paths = append(paths, strings.TrimSpace(l))
+	}
+	return paths, nil
 }

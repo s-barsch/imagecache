@@ -10,7 +10,7 @@ import (
 
 var cacheDir = regexp.MustCompile(`.*\\/cache\\/[0-9]{3,}`)
 
-func getCached() ([]file, error) {
+func getCached(root string) ([]file, error) {
 	fs := []file{}
 	wf := func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -32,7 +32,7 @@ func getCached() ([]file, error) {
 	return fs, nil
 }
 
-func getOriginals() ([]file, error) {
+func getOriginals(root string) ([]file, error) {
 	fs := []file{}
 	wf := func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
