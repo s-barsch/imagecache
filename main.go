@@ -1,7 +1,5 @@
 package main
 
-// TODO: there is an issue if one image of an already cached series is deleted. series doesnt show up.
-
 import (
 	"flag"
 	"fmt"
