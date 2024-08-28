@@ -12,20 +12,24 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	//"strings"
+	"strings"
 	"time"
+
 	//"rd"
-	"log"
 	"flag"
-	"github.com/rwcarlsen/goexif/exif"
-	"github.com/rwcarlsen/goexif/mknote"
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"log"
 	"math"
 	"os/signal"
 	"regexp"
+
+	"github.com/rwcarlsen/goexif/exif"
+	"github.com/rwcarlsen/goexif/mknote"
+	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-var root = "/srv/rg-s/st/data"
+// var root = "/srv/rg-s/st/data"
+ var root = "/Volumes/External/srv/rg-s/st/data/kine"
+//var root = "/Volumes/External/srv/rg-s/st/data/graph"
 var rootl = len(root)
 
 //var logfile = root + "/cache.log"
@@ -79,7 +83,7 @@ func rel(path string) string {
 	return path
 }
 
-//var validFilename = regexp.MustCompile("^[0-9]+_[0-9]+.jpg$")
+// var validFilename = regexp.MustCompile("^[0-9]+_[0-9]+.jpg$")
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 
 func cacheImages(opt *options) error {
@@ -99,8 +103,26 @@ func (f file) sizeFolder(size int) string {
 	return filepath.Join(f.cacheFolder(), strconv.FormatInt(int64(size), 10))
 }
 
+func (f file) cacheFileBlur(size int) string {
+	path := f.cacheFile(size)
+	i := strings.LastIndex(path, ".")
+	if i <= 0 {
+		panic("invalid path")
+	}
+	return path[:i] + "_blur" + path[i:]
+}
+
 func (f file) cacheFile(size int) string {
 	return filepath.Join(f.sizeFolder(size), f.base())
+}
+
+func (f file) cacheFileWebP(size int) string {
+	path := f.cacheFile(size)
+	i := strings.LastIndex(path, ".")
+	if i <= 0 {
+		panic("invalid path")
+	}
+	return path[:i] + ".webp"
 }
 
 func (f file) dimsFolder() string {
@@ -179,13 +201,16 @@ func cacheImage(f file, opt *options) error {
 		if err != nil {
 			return err
 		}
-		if !exists(f.cacheFile(size)) || size == opt.rerunSize ||
-			f.folder() == opt.rerunFolder || sourceIsNewer(f, size) {
+		rerunKine := false
+		if x := strings.Index(f.path(), "/kine/"); opt.rerunFolder == "kine" && x != -1 {
+			rerunKine = true
+		}
+		if !exists(f.cacheFile(size)) || size == opt.rerunSize || rerunKine ||
+			isMonth(f.path(), opt.rerunFolder) || sourceIsNewer(f, size) {
 			err := f.createCacheFile(size)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("cached \t %v\t(%v)\n", f.rel(), size)
 
 			//fmt.Printf("cached %v ->\n       %v \n", f.rel(), rel(f.cacheFile(size)))
 			continue
@@ -208,7 +233,13 @@ func deleteCached() error {
 				fmt.Printf("unsuccesful in deleting %v\n", cacheFile.rel())
 				continue
 			}
-			fmt.Printf("deleted -- source gone %v\n", cacheFile.rel())
+			p := cacheFile.pathWebP()
+			err = os.Remove(p)
+			if err != nil {
+				fmt.Printf("unsuccesful in deleting %v\n", rel(p))
+				continue
+			}
+			fmt.Printf("deleted -- source gone %v\n", rel(p))
 		}
 	}
 	return nil
@@ -261,6 +292,20 @@ func createFolder(path string) error {
 	return nil
 }
 
+func min(a, b uint) uint {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b uint) uint {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func (f file) createCacheFile(size int) error {
 	if f.ext() != ".jpg" {
 		return fmt.Errorf("caching of non-jpeg files is not supported.")
@@ -273,7 +318,7 @@ func (f file) createCacheFile(size int) error {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	err = mw.AutoOrientImage()
 	if err != nil {
 		return err
@@ -305,21 +350,23 @@ func (f file) createCacheFile(size int) error {
 
 	if orientation == "landscape" && w > uint(size) || orientation == "portrait" && h > uint(size) {
 		if orientation == "portrait" {
+			// height
 			mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
 		} else {
+			// width
 			mw = mw.TransformImage("", fmt.Sprintf("%v", size))
 		}
 
 		err := mw.SetImageCompressionQuality(90)
 		if err != nil {
-		log.Println("path: %v", f.path())
 			return err
 		}
 
 		// dont sharpen nexus images with image ratio 4:3
-		if math.Trunc((float64(w)/float64(h))*100) == 133 ||
-			math.Trunc((float64(h)/float64(w))*100) == 133 {
+		if math.Trunc((float64(max(w, h))/float64(min(w, h)))*100) == 133 &&
+			f.base()[:4] < "1903" {
 			err = mw.SharpenImage(0, 0.5)
+			log.Println("NEXUS, decreased sharpen")
 			if err != nil {
 				return err
 			}
@@ -341,6 +388,68 @@ func (f file) createCacheFile(size int) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("cached \t %v\t(%v)\n", f.rel(), size)
+
+	wmw := mw.Clone()
+	err = wmw.SetImageFormat("WEBP")
+	if err != nil {
+		return err
+	}
+
+	/*
+		err = wmw.SetOption("webp:lossless", "true")
+		if err != nil {
+			return err
+		}
+	*/
+	/*
+		err = wmw.SetImageCompressionQuality(80)
+		if err != nil {
+			return err
+		}
+	*/
+
+	err = wmw.WriteImage(f.cacheFileWebP(size))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("cached \t %v\n", rel(f.cacheFileWebP(size)))
+
+	blur, err := os.Create(f.cacheFileBlur(size))
+	if err != nil {
+		return err
+	}
+	defer blur.Close()
+
+	if orientation == "portrait" {
+		mw = mw.TransformImage("", fmt.Sprintf("x%v", 320))
+	} else {
+		mw = mw.TransformImage("", fmt.Sprintf("%v", 320))
+	}
+
+	// 12 normal
+	// 30 superblur
+	//    placeholder == black or gray image
+	err = mw.BlurImage(0, 12)
+	if err != nil {
+		return err
+	}
+
+	if orientation == "portrait" {
+		mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
+	} else {
+		mw = mw.TransformImage("", fmt.Sprintf("%v", size))
+	}
+
+	err = mw.WriteImageFile(blur)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("cached \t %v\n", rel(f.cacheFileBlur(size)))
+
 	mw.Destroy()
 	return nil
 }
@@ -415,184 +524,3 @@ func readExifDate(fname string) (string, error) {
 	}
 	return tm.Format("060102_150405.jpg"), nil
 }
-
-/*
-// log file must switch places
-// every jpg file must be indexed.
-func cacheImages(rerun string, rerunSize string) error {
-	fl, err := getFileList()
-	if err != nil {
-		return err
-	}
-	logf, err := readLog(logfile)
-	if err != nil {
-		fmt.Println(err)
-	}
-	cerrs := []error{}
-	// cached image files
-	m := map[string]time.Time{}
-	for _, f := range fl {
-		// see if the image has already been cached.
-		if logf != nil {
-			if ts := logf[f.Path]; ts != "" {
-				delete(logf, f.Path)
-				// check if caching can be skipped.
-				tstime, err  := time.Parse(time.UnixDate, ts)
-				if err != nil {
-					return err
-				}
-				fi, err := os.Stat(f.Abs())
-				if err != nil {
-					return err
-				}
-				// see if modification time is newer than timestamp from logfile.
-				if tstime.Unix() > fi.ModTime().Unix() && f.Folder() != rerun && rerun != "all" {
-					fmt.Printf("skipping %v because its already cached\n", f.Path)
-					m[f.Path] = tstime
-					continue
-				}
-			}
-		}
-		if f.IsDir() {
-			//if strings.Contains(f.Path, "_") {
-				err := cacheDir(f.Path)
-				if err != nil {
-					return err
-				}
-				m[f.Path] = time.Now()
-				continue
-			//}
-			continue
-		}
-		// IMG_20161201_240101999.jpg
-		if !validFilename.MatchString(f.Name()) {
-			f, err = renameImage(f)
-			if err != nil {
-				return err
-			}
-		}
-		err = createFolders(f.Path[:6])
-		if err != nil {
-			return err
-		}
-		err = cacheImage(f, rerunSize)
-		if err != nil {
-			cerrs = append(cerrs, err)
-			fmt.Println(err)
-			continue
-		}
-		m[f.Path] = time.Now()
-	}
-	for i, e := range cerrs {
-		if i == 0 {
-			fmt.Println("* ERRORS *")
-		}
-		fmt.Println(e)
-	}
-	err = writecache(m)
-	if err != nil {
-		log.Println(err)
-	}
-	err = diffcache(logf)
-	if err != nil {
-		log.Println(err)
-	}
-	return nil
-}
-
-func createFolders(p string) error {
-	_, err := os.Stat(p)
-	if err == nil {
-		return nil
-	}
-	for size, _ := range wsizes {
-		err = os.MkdirAll(filepath.Join(root, p, "cache", size), 0755)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func diffcache(m map[string]string) error {
-	for path, _ := range m {
-		for size, _ := range wsizes {
-			err := os.RemoveAll(filepath.Join(root, path[:6], "cache", size, path[6:]))
-			if err != nil {
-				fmt.Println(err)
-			}
-			fmt.Printf("removed %v (%v) cause its source is gone\n", path, size)
-		}
-	}
-	return nil
-}
-*/
-
-/*
-// see if any files have been deleted from "source" folder, delete all cached copies.
-func diffcache(m map[string]time.Time) error {
-	for size, _ := range wsizes {
-		l, err := readdir(filepath.Join(cache, size), "")
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		for _, f := range l {
-			if len(f.Path) < 6 {
-				fmt.Printf("err here")
-			}
-			month := f.Path[:4] // 1609
-			p := fmt.Sprintf("/%v-%v/%v", month[:2], month[2:], f.Path)
-			if _, ok := m[p]; !ok {
-				err = os.RemoveAll(filepath.Join(root, f.Path[:6], size, f.Path[6:]))
-				if err != nil {
-					//fmt.Println(err)
-					return err
-				}
-				fmt.Printf("removed /%v/%v cause its source is gone\n", size, f.Path)
-			}
-		}
-	}
-	return nil
-}
-
-func writecache(m map[string]time.Time) error {
-	// write cache.fmt.file
-	var buf bytes.Buffer
-	for k, v := range m {
-		_, err := buf.WriteString(fmt.Sprintf("%v: %v\n", k, v.Format(time.UnixDate)))
-		if err != nil {
-			return err
-		}
-	}
-	err := ioutil.WriteFile(root + "/cache.log", buf.Bytes(), 0666)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-*/
-/*
-func cacheDir(name string) error {
-	for size, _ := range wsizes {
-		// cutting the month /16-11 (len 6)
-		if len(name) < 6 {
-			return fmt.Errorf("dir path too short")
-		}
-		cp := filepath.Join(root, name[:6], "cache", size, name[6:])
-		fi, err := os.Stat(cp)
-		if err == nil && fi.IsDir() {
-			// already exists
-			fmt.Println("cachedir, already exists: ", cp)
-			return nil
-		}
-		err = os.Mkdir(cp, 0755)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("created dir %v\n", cp)
-		//fmt.Printf("created dir /%v/%v\n", size, name)
-	}
-	return nil
-}
-*/

@@ -79,6 +79,10 @@ func (f file) path() string {
 	return string(f)
 }
 
+func (f file) pathWebP() string {
+	return strings.Replace(f.path(), ".jpg", ".webp", 1)
+}
+
 func (f file) rel() string {
 	return rel(f.path())
 }
@@ -95,15 +99,34 @@ func (f file) dir() string {
 	return filepath.Dir(f.path())
 }
 
+var validFolder = regexp.MustCompile("^[0-9]{2}-[0-9]{2}$")
+
+func isMonth(path, month string) bool {
+	return monthFolder(path) == month
+}
+
+func monthFolder(path string) string {
+	if path == "." || path == "/" {
+		return path
+	}
+	dir := filepath.Dir(path)
+	name := filepath.Base(dir)
+	if !validFolder.MatchString(name) {
+		return monthFolder(dir)
+	}
+	return name
+}
+
 func (f file) folder() string {
 	return filepath.Base(f.dir())
 }
 
 func (f file) originalPath() string {
-	return filepath.Join(
+	path := filepath.Join(
 		filepath.Dir(filepath.Dir(filepath.Dir(f.path()))),
 		f.base(),
 	)
+	return strings.Replace(path, "_blur", "", -1)
 }
 
 type ByName []file
