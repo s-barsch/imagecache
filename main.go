@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-type options struct {
+type Options struct {
 	rerunFolder string
 	rerunSize   int
 	rerunDims   bool
@@ -26,7 +26,7 @@ func main() {
 	pathsCfg := flag.String("config", "./paths.cfg", "provide path to paths.cfg")
 	flag.Parse()
 
-	opt := &options{
+	opt := &Options{
 		rerunFolder: *rerunFolder,
 		rerunSize:   *rerunSize,
 		rerunDims:   *rerunDims,
@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	err = cacheImages(paths, opt)
+	err = cachePaths(paths, opt)
 	fmt.Println(err)
 }
 
@@ -62,19 +62,23 @@ var sharpen = map[int]float64{
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 
-func cacheImages(paths []string, opt *options) error {
+func cachePaths(paths []string, opt *Options) error {
 	for _, root := range paths {
-		err := cacheOriginals(root, opt)
-		if err != nil {
-			return err
-		}
-
-		err = deleteCached(root)
+		err := CacheImages(root, opt)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func CacheImages(root string, opt *Options) error {
+	err := cacheOriginals(root, opt)
+	if err != nil {
+		return err
+	}
+
+	return DeleteCached(root)
 }
 
 func readPaths(pathsCfg string) ([]string, error) {

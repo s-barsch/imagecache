@@ -12,7 +12,7 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-func cacheOriginals(root string, opt *options) error {
+func cacheOriginals(root string, opt *Options) error {
 	// get orig
 	// see if cached
 	files, err := getOriginals(root)
@@ -32,7 +32,7 @@ func cacheOriginals(root string, opt *options) error {
 					return err
 				}
 			}
-			err := cacheImage(f, opt)
+			err := CacheImage(f, opt)
 			if err != nil {
 				return err
 			}
@@ -41,7 +41,7 @@ func cacheOriginals(root string, opt *options) error {
 	return nil
 }
 
-func deleteCached(root string) error {
+func DeleteCached(root string) error {
 	cacheFiles, err := getCached(root)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func deleteCached(root string) error {
 	return nil
 }
 
-func sourceIsNewer(f file, size int) bool {
+func sourceIsNewer(f File, size int) bool {
 	sourceModTime, err := f.modtime()
 	if err != nil {
 		return true
@@ -88,16 +88,16 @@ func modtime(path string) (time.Time, error) {
 	return fi.ModTime(), nil
 }
 
-func (f file) modtime() (time.Time, error) {
+func (f File) modtime() (time.Time, error) {
 	return modtime(f.path())
 }
 
-func renameImage(f file) (file, error) {
+func renameImage(f File) (File, error) {
 	nn, err := readExifDate(f.path())
 	if err != nil {
 		return "", err
 	}
-	nf := file(filepath.Join(f.dir(), nn))
+	nf := File(filepath.Join(f.dir(), nn))
 
 	fmt.Printf("renamed %v to\n-> %v\n", f.base(), nf.base())
 	return nf, os.Rename(f.path(), nf.path())

@@ -12,7 +12,7 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-func cacheImage(f file, opt *options) error {
+func CacheImage(f File, opt *Options) error {
 	err := createFolder(f.cacheFolder())
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func cacheImage(f file, opt *options) error {
 	return nil
 }
 
-func (f file) createCacheFile(size int) error {
+func (f File) createCacheFile(size int) error {
 	if f.ext() != ".jpg" {
 		return fmt.Errorf("caching of non-jpeg files is not supported")
 	}
@@ -197,7 +197,7 @@ func (f file) createCacheFile(size int) error {
 	return nil
 }
 
-func (f file) createDimsFile() error {
+func (f File) createDimsFile() error {
 	if !exists(f.dimsFolder()) {
 		err := os.Mkdir(f.dimsFolder(), 0755)
 		if err != nil {
@@ -243,15 +243,15 @@ func max(a, b uint) uint {
 	return b
 }
 
-func (f file) cacheFolder() string {
+func (f File) cacheFolder() string {
 	return filepath.Join(f.dir(), "cache")
 }
 
-func (f file) sizeFolder(size int) string {
+func (f File) sizeFolder(size int) string {
 	return filepath.Join(f.cacheFolder(), strconv.FormatInt(int64(size), 10))
 }
 
-func (f file) cacheFileBlur(size int) string {
+func (f File) cacheFileBlur(size int) string {
 	path := f.cacheFile(size)
 	i := strings.LastIndex(path, ".")
 	if i <= 0 {
@@ -260,11 +260,11 @@ func (f file) cacheFileBlur(size int) string {
 	return path[:i] + "_blur" + path[i:]
 }
 
-func (f file) cacheFile(size int) string {
+func (f File) cacheFile(size int) string {
 	return filepath.Join(f.sizeFolder(size), f.base())
 }
 
-func (f file) cacheFileWebP(size int) string {
+func (f File) cacheFileWebP(size int) string {
 	path := f.cacheFile(size)
 	i := strings.LastIndex(path, ".")
 	if i <= 0 {
@@ -273,11 +273,11 @@ func (f file) cacheFileWebP(size int) string {
 	return path[:i] + ".webp"
 }
 
-func (f file) dimsFolder() string {
+func (f File) dimsFolder() string {
 	return filepath.Join(f.cacheFolder(), "dims")
 }
 
-func (f file) dimsFile() string {
+func (f File) dimsFile() string {
 	return filepath.Join(f.dimsFolder(), f.base()+".txt")
 }
 

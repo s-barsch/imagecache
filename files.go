@@ -10,13 +10,13 @@ import (
 
 var cacheDir = regexp.MustCompile(`.*\\/cache\\/[0-9]{3,}`)
 
-func getCached(root string) ([]file, error) {
-	fs := []file{}
+func getCached(root string) ([]File, error) {
+	fs := []File{}
 	wf := func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		f := file(p)
+		f := File(p)
 		if strings.ToLower(f.ext()) != ".jpg" {
 			return nil
 		}
@@ -32,8 +32,8 @@ func getCached(root string) ([]file, error) {
 	return fs, nil
 }
 
-func getOriginals(root string) ([]file, error) {
-	fs := []file{}
+func getOriginals(root string) ([]File, error) {
+	fs := []File{}
 	wf := func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -42,7 +42,7 @@ func getOriginals(root string) ([]file, error) {
 		case "cache", "bot", ".bot", "prv":
 			return filepath.SkipDir
 		}
-		f := file(p)
+		f := File(p)
 		if strings.ToLower(f.ext()) == ".jpg" { // what with png?
 			fs = append(fs, f)
 		}
@@ -55,25 +55,25 @@ func getOriginals(root string) ([]file, error) {
 	return fs, nil
 }
 
-type file string
+type File string
 
-func (f file) path() string {
+func (f File) path() string {
 	return string(f)
 }
 
-func (f file) pathWebP() string {
+func (f File) pathWebP() string {
 	return strings.Replace(f.path(), ".jpg", ".webp", 1)
 }
 
-func (f file) base() string {
+func (f File) base() string {
 	return filepath.Base(f.path())
 }
 
-func (f file) ext() string {
+func (f File) ext() string {
 	return filepath.Ext(f.path())
 }
 
-func (f file) dir() string {
+func (f File) dir() string {
 	return filepath.Dir(f.path())
 }
 
@@ -95,7 +95,7 @@ func monthFolder(path string) string {
 	return name
 }
 
-func (f file) originalPath() string {
+func (f File) originalPath() string {
 	path := filepath.Join(
 		filepath.Dir(filepath.Dir(filepath.Dir(f.path()))),
 		f.base(),
@@ -103,7 +103,7 @@ func (f file) originalPath() string {
 	return strings.Replace(path, "_blur", "", -1)
 }
 
-type ByName []file
+type ByName []File
 
 func (f ByName) Len() int           { return len(f) }
 func (f ByName) Less(i, j int) bool { return f[i].path() < f[j].path() }
