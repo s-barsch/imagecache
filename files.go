@@ -26,7 +26,7 @@ func readdir(root, path string) ([]file, error) {
 }
 */
 
-var cacheDir = regexp.MustCompile(".*\\/cache\\/[0-9]{3,}")
+var cacheDir = regexp.MustCompile(`.*\\/cache\\/[0-9]{3,}`)
 
 func getCached() ([]file, error) {
 	fs := []file{}
@@ -117,9 +117,11 @@ func monthFolder(path string) string {
 	return name
 }
 
+/*
 func (f file) folder() string {
 	return filepath.Base(f.dir())
 }
+*/
 
 func (f file) originalPath() string {
 	path := filepath.Join(

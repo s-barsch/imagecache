@@ -8,7 +8,6 @@ import (
 	//"image"
 	//"image/jpeg"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -28,8 +27,9 @@ import (
 )
 
 // var root = "/srv/rg-s/st/data"
- var root = "/Volumes/External/srv/rg-s/st/data/kine"
-//var root = "/Volumes/External/srv/rg-s/st/data/graph"
+var root = "/Volumes/External/srv/rg-s/st/data/kine"
+
+// var root = "/Volumes/External/srv/rg-s/st/data/graph"
 var rootl = len(root)
 
 //var logfile = root + "/cache.log"
@@ -135,10 +135,7 @@ func (f file) dimsFile() string {
 
 func exists(path string) bool {
 	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }
 
 func modtime(path string) (time.Time, error) {
@@ -263,7 +260,7 @@ func (f file) createDimsFile() error {
 	w := mw.GetImageWidth()
 	h := mw.GetImageHeight()
 
-	return ioutil.WriteFile(f.dimsFile(), []byte(fmt.Sprintf("%dx%d", w, h)), 0644)
+	return os.WriteFile(f.dimsFile(), []byte(fmt.Sprintf("%dx%d", w, h)), 0644)
 }
 
 func sourceIsNewer(f file, size int) bool {
@@ -308,7 +305,7 @@ func max(a, b uint) uint {
 
 func (f file) createCacheFile(size int) error {
 	if f.ext() != ".jpg" {
-		return fmt.Errorf("caching of non-jpeg files is not supported.")
+		return fmt.Errorf("caching of non-jpeg files is not supported")
 	}
 
 	mw := imagick.NewMagickWand()
@@ -482,7 +479,8 @@ func renameImage(f file) (file, error) {
 }
 */
 
-// found this on the internetz and modified it.
+/*
+// found this on the internet and modified it.
 func round(val float64) uint {
 	var roundn float64
 	roundOn := 0.5
@@ -498,6 +496,7 @@ func round(val float64) uint {
 	newVal := roundn / pow
 	return uint(newVal)
 }
+*/
 
 func readExifDate(fname string) (string, error) {
 	f, err := os.Open(fname)
