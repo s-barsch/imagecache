@@ -5,17 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
+
+	"g.sacerb.com/imagecache/cache"
 )
-
-type Options struct {
-	rerunFolder string
-	rerunSize   int
-	rerunDims   bool
-}
-
-var abort chan os.Signal
 
 func main() {
 	rerunFolder := flag.String("rerun", "", "which folder should be freshly cached? eg: 17-07. write \"all\" for everything")
@@ -24,14 +17,14 @@ func main() {
 	pathsCfg := flag.String("config", "./paths.cfg", "provide path to paths.cfg")
 	flag.Parse()
 
-	opt := &Options{
+	opt := &cache.Options{
 		rerunFolder: *rerunFolder,
 		rerunSize:   *rerunSize,
 		rerunDims:   *rerunDims,
 	}
 
-	abort = make(chan os.Signal, 1)
-	signal.Notify(abort, os.Interrupt)
+	cache.Abort = make(chan os.Signal, 1)
+	signal.Notify(cache.Abort, os.Interrupt)
 
 	paths, err := readPaths(*pathsCfg)
 	if err != nil {
@@ -43,40 +36,14 @@ func main() {
 	fmt.Println(err)
 }
 
-var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
-
-var sharpen = map[int]float64{
-	320:  0.5,
-	480:  0.5,
-	640:  0.6,
-	800:  0.8,
-	960:  0.8,
-	1280: 0.8,
-	1600: 0.8,
-	1920: 0.8,
-	2560: 0.8,
-	3200: 0.8,
-}
-
-var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
-
-func cachePaths(paths []string, opt *Options) error {
+func cachePaths(paths []string, opt *cache.Options) error {
 	for _, root := range paths {
-		err := CacheImages(root, opt)
+		err := cache.CacheImages(root, opt)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func CacheImages(root string, opt *Options) error {
-	err := cacheOriginals(root, opt)
-	if err != nil {
-		return err
-	}
-
-	return DeleteCached(root)
 }
 
 func readPaths(pathsCfg string) ([]string, error) {

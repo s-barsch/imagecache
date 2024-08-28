@@ -1,4 +1,4 @@
-package main
+package cache
 
 import (
 	"fmt"
@@ -6,11 +6,37 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
+
+type Options struct {
+	rerunFolder string
+	rerunSize   int
+	rerunDims   bool
+}
+
+var abort chan os.Signal
+
+var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
+
+var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
+
+var sharpen = map[int]float64{
+	320:  0.5,
+	480:  0.5,
+	640:  0.6,
+	800:  0.8,
+	960:  0.8,
+	1280: 0.8,
+	1600: 0.8,
+	1920: 0.8,
+	2560: 0.8,
+	3200: 0.8,
+}
 
 func CacheImage(f File, opt *Options) error {
 	err := createFolder(f.cacheFolder())

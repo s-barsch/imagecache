@@ -1,4 +1,4 @@
-package main
+package cache
 
 import (
 	"fmt"
@@ -12,7 +12,16 @@ import (
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
-func cacheOriginals(root string, opt *Options) error {
+func CacheImages(root string, opt *Options) error {
+	err := CacheOriginals(root, opt)
+	if err != nil {
+		return err
+	}
+
+	return DeleteCached(root)
+}
+
+func CacheOriginals(root string, opt *Options) error {
 	// get orig
 	// see if cached
 	files, err := getOriginals(root)
