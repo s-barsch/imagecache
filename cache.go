@@ -287,8 +287,9 @@ func exists(path string) bool {
 }
 
 func cap(path string) string {
-	if len(path) > 32 {
-		return path[32:]
+	l := len(path)
+	if l > 31 {
+		return path[l-32:]
 	}
 	return path
 }
