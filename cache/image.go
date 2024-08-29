@@ -19,8 +19,6 @@ type Options struct {
 	RerunDims   bool
 }
 
-var Abort chan os.Signal
-
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 
 var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}

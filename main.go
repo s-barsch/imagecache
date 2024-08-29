@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
 
 	"g.sacerb.com/imagecache/cache"
@@ -22,9 +21,6 @@ func main() {
 		RerunSize:   *rerunSize,
 		RerunDims:   *rerunDims,
 	}
-
-	cache.Abort = make(chan os.Signal, 1)
-	signal.Notify(cache.Abort, os.Interrupt)
 
 	paths, err := readPaths(*pathsCfg)
 	if err != nil {

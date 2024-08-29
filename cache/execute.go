@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"time"
 
@@ -28,11 +29,15 @@ func CacheOriginals(root string, opt *Options) error {
 	if err != nil {
 		return err
 	}
+
+	abort := make(chan os.Signal, 1)
+	signal.Notify(abort, os.Interrupt)
+
 	imagick.Initialize()
 	defer imagick.Terminate()
 	for _, f := range files {
 		select {
-		case <-Abort:
+		case <-abort:
 			return fmt.Errorf("PROGRAM INTERRUPTED")
 		default:
 			if f.base() != "cover.jpg" && !validFilename.MatchString(f.base()) {
