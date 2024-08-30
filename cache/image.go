@@ -311,9 +311,10 @@ func exists(path string) bool {
 }
 
 func cap(path string) string {
-	l := len(path)
-	if l > 31 {
-		return path[l-32:]
+	const data = "/data"
+	const l = len(data)
+	if i := strings.Index(path, data); i > 0+l {
+		return path[i+l:]
 	}
 	return path
 }

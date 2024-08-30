@@ -2,13 +2,35 @@ package cache
 
 import (
 	//"io/ioutil"
+
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-var cacheDir = regexp.MustCompile(`.*\/cache\/[0-9]{3,}`)
+var cacheDir = regexp.MustCompile(`.*\/cache\/([0-9]{3,}|dims)`)
+
+func isDimsFile(path string) bool {
+	if l := len(path); l > 8 && path[l-8:] == ".jpg.txt" {
+		return true
+	}
+	return false
+}
+
+func isCachedFile(path string) bool {
+	if !cacheDir.MatchString(filepath.Dir(path)) {
+		return false
+	}
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".jpg", ".webp":
+		return true
+	case ".txt":
+		return isDimsFile(path)
+	}
+	return false
+}
 
 func getCached(root string) ([]File, error) {
 	fs := []File{}
@@ -17,12 +39,51 @@ func getCached(root string) ([]File, error) {
 			return err
 		}
 		f := File(p)
-		if strings.ToLower(f.ext()) != ".jpg" {
-			return nil
-		}
-		if cacheDir.MatchString(f.dir()) {
+		if isCachedFile(p) {
 			fs = append(fs, f)
 		}
+		return nil
+	}
+	err := filepath.Walk(root, wf)
+	if err != nil {
+		return nil, err
+	}
+	return fs, nil
+}
+
+func isCacheFolderName(name string) bool {
+	if name == "cache" || name == "dims" {
+		return true
+	}
+	for _, size := range sizes {
+		if name == strconv.Itoa(size) {
+			return true
+		}
+	}
+	return false
+}
+
+func getEmptyFolders(root string) ([]File, error) {
+	fs := []File{}
+	wf := func(p string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		f := File(p)
+		if !fi.IsDir() {
+			return nil
+		}
+		if !isCacheFolderName(fi.Name()) {
+			return nil
+		}
+		l, err := os.ReadDir(p)
+		if err != nil {
+			return nil
+		}
+		if len(l) > 0 {
+			return nil
+		}
+		fs = append(fs, f)
 		return nil
 	}
 	err := filepath.Walk(root, wf)
@@ -61,10 +122,6 @@ func (f File) path() string {
 	return string(f)
 }
 
-func (f File) pathWebP() string {
-	return strings.Replace(f.path(), ".jpg", ".webp", 1)
-}
-
 func (f File) base() string {
 	return filepath.Base(f.path())
 }
@@ -100,7 +157,15 @@ func (f File) originalPath() string {
 		filepath.Dir(filepath.Dir(filepath.Dir(f.path()))),
 		f.base(),
 	)
-	return strings.Replace(path, "_blur", "", -1)
+	switch f.ext() {
+	case ".jpg":
+		return strings.Replace(path, "_blur", "", -1)
+	case ".webp":
+		return strings.Replace(path, ".webp", ".jpg", 1)
+	case ".txt":
+		return strings.Replace(path, ".txt", "", 1)
+	}
+	panic("originalPath: invalid file extension")
 }
 
 type ByName []File

@@ -19,7 +19,12 @@ func CacheImages(root string, opt *Options) error {
 		return err
 	}
 
-	return DeleteCached(root)
+	err = DeleteCached(root)
+	if err != nil {
+		return err
+	}
+
+	return DeleteEmptyFolders(root)
 }
 
 func CacheOriginals(root string, opt *Options) error {
@@ -55,6 +60,21 @@ func CacheOriginals(root string, opt *Options) error {
 	return nil
 }
 
+func DeleteEmptyFolders(root string) error {
+	l, err := getEmptyFolders(root)
+	if err != nil {
+		return err
+	}
+	for _, folder := range l {
+		err = os.Remove(folder.path())
+		if err != nil {
+			return err
+		}
+		fmt.Printf("deleted empty cache folder %v\n", cap(folder.path()))
+	}
+	return nil
+}
+
 func DeleteCached(root string) error {
 	cacheFiles, err := getCached(root)
 	if err != nil {
@@ -67,13 +87,7 @@ func DeleteCached(root string) error {
 				fmt.Printf("unsuccesful in deleting %v\n", cap(cacheFile.path()))
 				continue
 			}
-			p := cacheFile.pathWebP()
-			err = os.Remove(p)
-			if err != nil {
-				fmt.Printf("unsuccesful in deleting %v\n", cap(p))
-				continue
-			}
-			fmt.Printf("deleted -- source gone %v\n", cap(p))
+			fmt.Printf("deleted -- source gone %v\n", cap(cacheFile.path()))
 		}
 	}
 	return nil
