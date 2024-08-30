@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var cacheDir = regexp.MustCompile(`.*\\/cache\\/[0-9]{3,}`)
+var cacheDir = regexp.MustCompile(`.*\/cache\/[0-9]{3,}`)
 
 func getCached(root string) ([]File, error) {
 	fs := []File{}

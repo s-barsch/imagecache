@@ -50,7 +50,7 @@ func readPaths(pathsCfg string) ([]string, error) {
 	lines := strings.Split(string(b), "\n")
 	paths := []string{}
 	for _, l := range lines {
-		if l[0] == '#' {
+		if len(l) == 0 || l[0] == '#' {
 			continue
 		}
 		paths = append(paths, strings.TrimSpace(l))
