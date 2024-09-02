@@ -31,15 +31,16 @@ func CacheImages(root string, opt *Options) error {
 }
 
 func CacheOriginals(root string, opt *Options) error {
-	// get orig
-	// see if cached
 	files, err := getOriginals(root)
 	if err != nil {
 		return err
 	}
 
 	abort := make(chan os.Signal, 1)
-	signal.Notify(abort, os.Interrupt)
+	if Writer == nil {
+		// only if launched from command line
+		signal.Notify(abort, os.Interrupt)
+	}
 
 	imagick.Initialize()
 	defer imagick.Terminate()
