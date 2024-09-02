@@ -18,11 +18,13 @@ type Options struct {
 	RerunFolder string
 	RerunSize   int
 	RerunDims   bool
+	Writer      io.Writer
 }
 
-var W io.Writer
+var Writer io.Writer
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
+var numFilename = regexp.MustCompile("[0-9]{3,4}")
 
 var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
 
@@ -39,7 +41,32 @@ var sharpen = map[int]float64{
 	3200: 0.8,
 }
 
+func Print(msg, path string) {
+	var (
+		lb string
+		mw io.Writer
+	)
+	size := numFilename.FindString(path)
+	if Writer == nil {
+		mw = os.Stdout
+		lb = "\n"
+		path = Cap(path)
+	} else {
+		mw = Writer
+		path = filepath.Base(path)
+	}
+	if size != "" {
+		msg = fmt.Sprintf(msg+" (%v)"+lb, path, size)
+	} else {
+		msg = fmt.Sprintf(msg+lb, path)
+	}
+	fmt.Fprint(mw, msg)
+}
+
 func CacheImage(f File, opt *Options) error {
+	if opt.Writer != nil {
+		Writer = opt.Writer
+	}
 	err := createFolder(f.cacheFolder())
 	if err != nil {
 		return err
@@ -50,7 +77,7 @@ func CacheImage(f File, opt *Options) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("created dims file %v\n", cap(f.dimsFile()))
+		Print("created dims file %v", f.dimsFile())
 	}
 
 	for _, size := range sizes {
@@ -70,7 +97,7 @@ func CacheImage(f File, opt *Options) error {
 			}
 			continue
 		}
-		fmt.Printf("skipping %v\t(%v)\talready cached\n", cap(f.path()), size)
+		Print("skipping: %v -- already cached", f.cacheFile(size))
 	}
 
 	return nil
@@ -148,7 +175,8 @@ func (f File) createCacheFile(size int) error {
 		}
 	}
 
-	out, err := os.Create(f.cacheFile(size))
+	p := f.cacheFile(size)
+	out, err := os.Create(p)
 	if err != nil {
 		return err
 	}
@@ -159,7 +187,7 @@ func (f File) createCacheFile(size int) error {
 		return err
 	}
 
-	fmt.Printf("cached \t %v\t(%v)\n", cap(f.path()), size)
+	Print("cached: %v", p)
 
 	wmw := mw.Clone()
 	err = wmw.SetImageFormat("WEBP")
@@ -185,7 +213,7 @@ func (f File) createCacheFile(size int) error {
 		return err
 	}
 
-	fmt.Printf("cached \t %v\n", cap(f.cacheFileWebP(size)))
+	Print("cached: %v", f.cacheFileWebP(size))
 
 	/*
 		blur, err := os.Create(f.cacheFileBlur(size))
@@ -253,7 +281,7 @@ func createFolder(path string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("created %v (folder)\n", cap(path))
+		Print("created %v (folder)", path)
 	}
 	return nil
 }
@@ -317,7 +345,7 @@ func exists(path string) bool {
 	return err == nil
 }
 
-func cap(path string) string {
+func Cap(path string) string {
 	const data = "/data"
 	const l = len(data)
 	if i := strings.Index(path, data); i > 0+l {

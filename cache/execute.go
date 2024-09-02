@@ -14,6 +14,9 @@ import (
 )
 
 func CacheImages(root string, opt *Options) error {
+	if opt.Writer != nil {
+		Writer = opt.Writer
+	}
 	err := CacheOriginals(root, opt)
 	if err != nil {
 		return err
@@ -70,7 +73,7 @@ func DeleteEmptyFolders(root string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("deleted empty cache folder %v\n", cap(folder.path()))
+		Print("deleted empty cache folder %v", folder.path())
 	}
 	return nil
 }
@@ -84,10 +87,10 @@ func DeleteCached(root string) error {
 		if !exists(cacheFile.originalPath()) {
 			err = os.Remove(cacheFile.path())
 			if err != nil {
-				fmt.Printf("unsuccesful in deleting %v\n", cap(cacheFile.path()))
+				Print("unsuccesful in deleting %v", cacheFile.path())
 				continue
 			}
-			fmt.Printf("deleted -- source gone %v\n", cap(cacheFile.path()))
+			Print("deleted -- source gone %v", cacheFile.path())
 		}
 	}
 	return nil
@@ -127,7 +130,7 @@ func renameImage(f File) (File, error) {
 	}
 	nf := File(filepath.Join(f.dir(), nn))
 
-	fmt.Printf("renamed %v to\n-> %v\n", f.base(), nf.base())
+	Print(fmt.Sprintf("renamed %v to -> %v", f.base(), nf.base()), "")
 	return nf, os.Rename(f.path(), nf.path())
 }
 
