@@ -64,16 +64,19 @@ func CacheOriginals(root string, opt *Options) error {
 }
 
 func DeleteEmptyFolders(root string) error {
-	l, err := getEmptyFolders(root)
-	if err != nil {
-		return err
-	}
-	for _, folder := range l {
-		err = os.Remove(folder.path())
+	// two times to also delete parent dirs that turn empty after the first run
+	for i := 0; i < 2; i++ {
+		l, err := getEmptyFolders(root)
 		if err != nil {
 			return err
 		}
-		Print("deleted empty cache folder %v", folder.path())
+		for _, folder := range l {
+			err = os.Remove(folder.path())
+			if err != nil {
+				return err
+			}
+			Print("deleted empty cache folder %v", folder.path())
+		}
 	}
 	return nil
 }
