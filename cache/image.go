@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -18,6 +19,8 @@ type Options struct {
 	RerunSize   int
 	RerunDims   bool
 }
+
+var W io.Writer
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 
@@ -184,38 +187,40 @@ func (f File) createCacheFile(size int) error {
 
 	fmt.Printf("cached \t %v\n", cap(f.cacheFileWebP(size)))
 
-	blur, err := os.Create(f.cacheFileBlur(size))
-	if err != nil {
-		return err
-	}
-	defer blur.Close()
+	/*
+		blur, err := os.Create(f.cacheFileBlur(size))
+		if err != nil {
+			return err
+		}
+		defer blur.Close()
 
-	if orientation == "portrait" {
-		mw = mw.TransformImage("", fmt.Sprintf("x%v", 320))
-	} else {
-		mw = mw.TransformImage("", fmt.Sprintf("%v", 320))
-	}
+		if orientation == "portrait" {
+			mw = mw.TransformImage("", fmt.Sprintf("x%v", 320))
+		} else {
+			mw = mw.TransformImage("", fmt.Sprintf("%v", 320))
+		}
 
-	// 12 normal
-	// 30 superblur
-	//    placeholder == black or gray image
-	err = mw.BlurImage(0, 12)
-	if err != nil {
-		return err
-	}
+		// 12 normal
+		// 30 superblur
+		//    placeholder == black or gray image
+		err = mw.BlurImage(0, 12)
+		if err != nil {
+			return err
+		}
 
-	if orientation == "portrait" {
-		mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
-	} else {
-		mw = mw.TransformImage("", fmt.Sprintf("%v", size))
-	}
+		if orientation == "portrait" {
+			mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
+		} else {
+			mw = mw.TransformImage("", fmt.Sprintf("%v", size))
+		}
 
-	err = mw.WriteImageFile(blur)
-	if err != nil {
-		return err
-	}
+		err = mw.WriteImageFile(blur)
+		if err != nil {
+			return err
+		}
 
-	fmt.Printf("cached \t %v\n", cap(f.cacheFileBlur(size)))
+		fmt.Printf("cached \t %v\n", cap(f.cacheFileBlur(size)))
+	*/
 
 	mw.Destroy()
 	return nil
@@ -275,6 +280,7 @@ func (f File) sizeFolder(size int) string {
 	return filepath.Join(f.cacheFolder(), strconv.FormatInt(int64(size), 10))
 }
 
+/*
 func (f File) cacheFileBlur(size int) string {
 	path := f.cacheFile(size)
 	i := strings.LastIndex(path, ".")
@@ -283,6 +289,7 @@ func (f File) cacheFileBlur(size int) string {
 	}
 	return path[:i] + "_blur" + path[i:]
 }
+*/
 
 func (f File) cacheFile(size int) string {
 	return filepath.Join(f.sizeFolder(size), f.base())
