@@ -134,7 +134,7 @@ func renameImage(f File) (File, error) {
 	}
 	nf := File(filepath.Join(f.dir(), nn))
 
-	Print(fmt.Sprintf("renamed %v to -> %v", f.base(), nf.base()), "")
+	Print(fmt.Sprintf("renamed %v to -> %v", f.base(), nf.base())+"%v", "")
 	return nf, os.Rename(f.path(), nf.path())
 }
 

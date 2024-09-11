@@ -24,7 +24,7 @@ type Options struct {
 var Writer io.Writer
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
-var numFilename = regexp.MustCompile("[0-9]{3,4}")
+var numFilename = regexp.MustCompile("/cache/[0-9]{3,4}/")
 
 var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
 
@@ -56,11 +56,11 @@ func Print(msg, path string) {
 		path = filepath.Base(path)
 	}
 	if size != "" {
-		msg = fmt.Sprintf(msg+" (%v)"+lb, path, size)
-	} else {
-		msg = fmt.Sprintf(msg+lb, path)
+		size = strings.Trim(size, "/cahe")
+		fmt.Fprintf(mw, msg+"\t(%v)"+lb, path, size)
+		return
 	}
-	fmt.Fprint(mw, msg)
+	fmt.Fprintf(mw, msg+lb, path)
 }
 
 func CacheImage(f File, opt *Options) error {
