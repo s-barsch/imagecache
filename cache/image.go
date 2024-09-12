@@ -24,7 +24,7 @@ type Options struct {
 var Writer io.Writer
 
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
-var numFilename = regexp.MustCompile("/cache/[0-9]{3,4}/")
+var numFilename = regexp.MustCompile("/img/[0-9]{3,4}/")
 
 var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
 
@@ -56,7 +56,7 @@ func Print(msg, path string) {
 		path = filepath.Base(path)
 	}
 	if size != "" {
-		size = strings.Trim(size, "/cahe")
+		size = strings.Trim(size, "/img")
 		fmt.Fprintf(mw, msg+"\t(%v)"+lb, path, size)
 		return
 	}
@@ -301,7 +301,7 @@ func max(a, b uint) uint {
 }
 
 func (f File) cacheFolder() string {
-	return filepath.Join(f.dir(), "cache")
+	return filepath.Join(f.dir(), "img")
 }
 
 func (f File) sizeFolder(size int) string {

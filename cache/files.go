@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var cacheDir = regexp.MustCompile(`.*\/cache\/([0-9]{3,}|dims)`)
+var cacheDir = regexp.MustCompile(`.*\/img\/([0-9]{3,}|dims)`)
 
 func isDimsFile(path string) bool {
 	if l := len(path); l > 8 && path[l-8:] == ".jpg.txt" {
@@ -52,7 +52,7 @@ func getCached(root string) ([]File, error) {
 }
 
 func isCacheFolderName(name string) bool {
-	if name == "cache" || name == "dims" {
+	if name == "img" || name == "dims" {
 		return true
 	}
 	for _, size := range sizes {
@@ -100,7 +100,7 @@ func getOriginals(root string) ([]File, error) {
 			return err
 		}
 		switch fi.Name() {
-		case "cache", "bot", ".bot", "prv":
+		case "img", "bot", ".bot", "prv":
 			return filepath.SkipDir
 		}
 		f := File(p)
