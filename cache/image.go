@@ -26,7 +26,7 @@ var Writer io.Writer
 var validFilename = regexp.MustCompile("^[0-9]{6}_[0-9]{6}[a-z\u00E0-\u00FC-+]*\\.[a-z]+$")
 var numFilename = regexp.MustCompile("/img/[0-9]{3,4}/")
 
-var sizes = []int{320, 480, 640, 800, 960, 1280, 1600, 1920, 2560, 3200}
+var sizes = []int{320, 480, 640, 800, 960, 1280, 1440, 1600, 1920, 2560, 3200}
 
 var sharpen = map[int]float64{
 	320:  0.5,
