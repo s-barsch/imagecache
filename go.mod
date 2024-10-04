@@ -1,4 +1,4 @@
-module g.sacerb.com/imagecache
+module g.rg-s.com/imagecache
 
 go 1.23.0
 
@@ -7,4 +7,4 @@ require (
 	gopkg.in/gographics/imagick.v2 v2.7.0
 )
 
-replace g.sacerb.com/imagecache/cache => ./cache
+replace g.rg-s.com/imagecache/cache => ./cache
