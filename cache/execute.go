@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
 
@@ -17,7 +19,11 @@ func CacheImages(root string, opt *Options) error {
 	if opt.Writer != nil {
 		Writer = opt.Writer
 	}
-	err := CacheOriginals(root, opt)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	err := CacheOriginals(ctx, root, opt)
 	if err != nil {
 		return err
 	}
@@ -30,38 +36,46 @@ func CacheImages(root string, opt *Options) error {
 	return DeleteEmptyFolders(root)
 }
 
-func CacheOriginals(root string, opt *Options) error {
+func CacheOriginals(ctx context.Context, root string, opt *Options) error {
+	g, ctx := errgroup.WithContext(ctx)
+
 	files, err := getOriginals(root)
 	if err != nil {
 		return err
 	}
 
-	abort := make(chan os.Signal, 1)
-	if Writer == nil {
-		// only if launched from command line
-		signal.Notify(abort, os.Interrupt)
-	}
+	locker := &locker{}
+	buf := make(chan struct{}, 10)
 
 	imagick.Initialize()
 	defer imagick.Terminate()
-	for _, f := range files {
-		select {
-		case <-abort:
-			return fmt.Errorf("PROGRAM INTERRUPTED")
-		default:
-			if f.base() != "cover.jpg" && !validFilename.MatchString(f.base()) {
-				f, err = renameImage(f)
-				if err != nil {
-					return err
-				}
+	for i, f := range files {
+		g.Go(func() error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case buf <- struct{}{}:
+				fmt.Printf("queue #%v\n", i)
+				defer func() {
+					<-buf
+				}()
+				return renameAndCache(f, locker, opt)
 			}
-			err := CacheImage(f, opt)
-			if err != nil {
-				return err
-			}
+		})
+	}
+
+	return g.Wait()
+}
+
+func renameAndCache(f File, locker *locker, opt *Options) error {
+	var err error
+	if f.base() != "cover.jpg" && !validFilename.MatchString(f.base()) {
+		f, err = renameImage(f)
+		if err != nil {
+			return err
 		}
 	}
-	return nil
+	return CacheImage(f, locker, opt)
 }
 
 func DeleteEmptyFolders(root string) error {
