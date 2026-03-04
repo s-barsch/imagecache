@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"gopkg.in/gographics/imagick.v2/imagick"
 )
@@ -63,25 +64,51 @@ func Print(msg, path string) {
 	fmt.Fprintf(mw, msg+lb, path)
 }
 
-func CacheImage(f File, opt *Options) error {
+type locker struct {
+	mu sync.Mutex
+}
+
+func (l *locker) createFolder(path string) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if exists(path) {
+		return nil
+	}
+
+	err := os.Mkdir(path, 0755)
+	if err != nil {
+		return err
+	}
+
+	Print("created %v (folder)", path)
+	return nil
+}
+
+func CacheImage(f File, locker *locker, opt *Options) error {
 	if opt.Writer != nil {
 		Writer = opt.Writer
 	}
-	err := createFolder(f.cacheFolder())
+	err := locker.createFolder(f.cacheFolder())
 	if err != nil {
 		return err
 	}
 
 	if !exists(f.dimsFile()) || opt.RerunDims || sourceIsNewer(f, 1600) {
-		err := f.createDimsFile()
+		err := f.createDimsFile(locker)
 		if err != nil {
 			return err
 		}
 		Print("created dims file %v", f.dimsFile())
 	}
 
+	sizeMap := make(map[int]struct{})
 	for _, size := range sizes {
-		err := createFolder(f.sizeFolder(size))
+		// randomize execution order
+		sizeMap[size] = struct{}{}
+	}
+
+	for size := range sizeMap {
+		err := locker.createFolder(f.sizeFolder(size))
 		if err != nil {
 			return err
 		}
@@ -254,17 +281,16 @@ func (f File) createCacheFile(size int) error {
 	return nil
 }
 
-func (f File) createDimsFile() error {
-	if !exists(f.dimsFolder()) {
-		err := os.Mkdir(f.dimsFolder(), 0755)
-		if err != nil {
-			return err
-		}
+func (f File) createDimsFile(locker *locker) error {
+	err := locker.createFolder(f.dimsFolder())
+	if err != nil {
+		return err
 	}
+
 	mw := imagick.NewMagickWand()
 	defer mw.Destroy()
 
-	err := mw.ReadImage(f.path())
+	err = mw.ReadImage(f.path())
 	if err != nil {
 		panic(err)
 	}
@@ -273,17 +299,6 @@ func (f File) createDimsFile() error {
 	h := mw.GetImageHeight()
 
 	return os.WriteFile(f.dimsFile(), []byte(fmt.Sprintf("%dx%d", w, h)), 0644)
-}
-
-func createFolder(path string) error {
-	if !exists(path) {
-		err := os.Mkdir(path, 0755)
-		if err != nil {
-			return err
-		}
-		Print("created %v (folder)", path)
-	}
-	return nil
 }
 
 func min(a, b uint) uint {
