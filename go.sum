@@ -1,4 +1,6 @@
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd h1:CmH9+J6ZSsIjUK3dcGsnCnO41eRBOnY12zwkn5qVwgc=
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd/go.mod h1:hPqNNc0+uJM6H+SuU8sEs5K5IQeKccPqeSjfgcKGgPk=
-gopkg.in/gographics/imagick.v2 v2.7.0 h1:Acluvnk5MhtETFX4EVnt9NbjC32ROaaC3bx6nJueHJk=
-gopkg.in/gographics/imagick.v2 v2.7.0/go.mod h1:/QVPLV/iKdNttRKthmDkeeGg+vdHurVEPc8zkU0XgBk=
+golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
+golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+gopkg.in/gographics/imagick.v2 v2.7.1 h1:7k8qhqYwF093KJ/vmWJHoOkI9zzLOhL/h2qt5LFc7iw=
+gopkg.in/gographics/imagick.v2 v2.7.1/go.mod h1:i87+p+KdGE2FerYMoj6JWEqsmpTWyYM8LQqMDtu5Hws=
