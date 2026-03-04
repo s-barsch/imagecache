@@ -159,7 +159,7 @@ func (f File) originalPath() string {
 	)
 	switch f.ext() {
 	case ".jpg":
-		return strings.Replace(path, "_blur", "", -1)
+		return strings.ReplaceAll(path, "_blur", "")
 	case ".webp":
 		return strings.Replace(path, ".webp", ".jpg", 1)
 	case ".txt":
