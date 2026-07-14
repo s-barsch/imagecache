@@ -152,20 +152,31 @@ func monthFolder(path string) string {
 	return name
 }
 
-func (f File) originalPath() string {
+func (f File) originalPaths() []string {
 	path := filepath.Join(
 		filepath.Dir(filepath.Dir(filepath.Dir(f.path()))),
 		f.base(),
 	)
 	switch f.ext() {
 	case ".jpg":
-		return strings.ReplaceAll(path, "_blur", "")
+		noExt := strings.ReplaceAll(path, "_blur", "")
+		return replaceMultiExt(noExt, ".jpg")
 	case ".webp":
-		return strings.Replace(path, ".webp", ".jpg", 1)
+		return replaceMultiExt(path, ".webp")
 	case ".txt":
-		return strings.Replace(path, ".txt", "", 1)
+		return []string{strings.Replace(path, ".txt", "", 1)}
 	}
 	panic("originalPath: invalid file extension")
+}
+
+func replaceMultiExt(path, origExt string) []string {
+	ret := make([]string, 0)
+
+	for _, format := range AllFormats() {
+		ret = append(ret, strings.Replace(path, origExt, format.Ext(), 1))
+	}
+
+	return ret
 }
 
 type ByName []File

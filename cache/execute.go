@@ -102,7 +102,7 @@ func DeleteCached(root string) error {
 		return err
 	}
 	for _, cacheFile := range cacheFiles {
-		if !exists(cacheFile.originalPath()) {
+		if !multiExists(cacheFile.originalPaths()) {
 			err = os.Remove(cacheFile.path())
 			if err != nil {
 				Print("unsuccesful in deleting %v", cacheFile.path())

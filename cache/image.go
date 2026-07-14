@@ -225,7 +225,7 @@ func (f File) createCacheFile(size int) error {
 	Print("cached: %v", p)
 
 	wmw := mw.Clone()
-	err = wmw.SetImageFormat("WEBP")
+	err = wmw.SetImageFormat("AVIF")
 	if err != nil {
 		return err
 	}
@@ -243,12 +243,12 @@ func (f File) createCacheFile(size int) error {
 		}
 	*/
 
-	err = wmw.WriteImage(f.cacheFileWebP(size))
+	err = wmw.WriteImage(f.cacheFileAvif(size))
 	if err != nil {
 		return err
 	}
 
-	Print("cached: %v", f.cacheFileWebP(size))
+	Print("cached: %v", f.cacheFileAvif(size))
 
 	/*
 		blur, err := os.Create(f.cacheFileBlur(size))
@@ -346,13 +346,13 @@ func (f File) cacheFile(size int) string {
 	return filepath.Join(f.sizeFolder(size), f.base())
 }
 
-func (f File) cacheFileWebP(size int) string {
+func (f File) cacheFileAvif(size int) string {
 	path := f.cacheFile(size)
 	i := strings.LastIndex(path, ".")
 	if i <= 0 {
 		panic("invalid path")
 	}
-	return path[:i] + ".webp"
+	return path[:i] + ".avif"
 }
 
 func (f File) dimsFolder() string {
@@ -366,6 +366,16 @@ func (f File) dimsFile() string {
 func exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func multiExists(paths []string) bool {
+	for _, p := range paths {
+		if exists(p) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func Cap(path string) string {
