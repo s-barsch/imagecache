@@ -15,6 +15,12 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
+const CacheSectionFolder = "cache"
+
+func dirRegex(dir string) string {
+	return fmt.Sprintf("/%v/", dir)
+}
+
 type Options struct {
 	RerunFolder string
 	RerunSize   int
@@ -112,11 +118,11 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 		if err != nil {
 			return err
 		}
-		rerunKine := false
-		if x := strings.Index(f.path(), "/kine/"); opt.RerunFolder == "kine" && x != -1 {
-			rerunKine = true
+		rerunCache := false
+		if x := strings.Index(f.path(), dirRegex(CacheSectionFolder)); opt.RerunFolder == CacheSectionFolder && x != -1 {
+			rerunCache = true
 		}
-		if !exists(f.cacheFile(size)) || size == opt.RerunSize || rerunKine ||
+		if !exists(f.cacheFile(size)) || size == opt.RerunSize || rerunCache ||
 			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) {
 			err := f.createCacheFile(size)
 			if err != nil {
@@ -131,8 +137,8 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 }
 
 func (f File) createCacheFile(size int) error {
-	if f.ext() != ".jpg" {
-		return fmt.Errorf("caching of non-jpeg files is not supported")
+	if ext := f.ext(); ext != JPEG.Ext() && ext != AVIF.Ext() && ext != PNG.Ext() {
+		return fmt.Errorf("source file should be jpeg, png, or avif")
 	}
 
 	mw := imagick.NewMagickWand()
@@ -230,60 +236,12 @@ func (f File) createCacheFile(size int) error {
 		return err
 	}
 
-	/*
-		err = wmw.SetOption("webp:lossless", "true")
-		if err != nil {
-			return err
-		}
-	*/
-	/*
-		err = wmw.SetImageCompressionQuality(80)
-		if err != nil {
-			return err
-		}
-	*/
-
 	err = wmw.WriteImage(f.cacheFileAvif(size))
 	if err != nil {
 		return err
 	}
 
 	Print("cached: %v", f.cacheFileAvif(size))
-
-	/*
-		blur, err := os.Create(f.cacheFileBlur(size))
-		if err != nil {
-			return err
-		}
-		defer blur.Close()
-
-		if orientation == "portrait" {
-			mw = mw.TransformImage("", fmt.Sprintf("x%v", 320))
-		} else {
-			mw = mw.TransformImage("", fmt.Sprintf("%v", 320))
-		}
-
-		// 12 normal
-		// 30 superblur
-		//    placeholder == black or gray image
-		err = mw.BlurImage(0, 12)
-		if err != nil {
-			return err
-		}
-
-		if orientation == "portrait" {
-			mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
-		} else {
-			mw = mw.TransformImage("", fmt.Sprintf("%v", size))
-		}
-
-		err = mw.WriteImageFile(blur)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("cached \t %v\n", cap(f.cacheFileBlur(size)))
-	*/
 
 	mw.Destroy()
 	return nil

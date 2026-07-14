@@ -5,6 +5,7 @@ type Format uint8
 const (
 	JPEG Format = iota + 1
 	WEBP
+	PNG
 	AVIF
 )
 
@@ -14,6 +15,8 @@ func (f Format) String() string {
 		return "jpg"
 	case WEBP:
 		return "webp"
+	case PNG:
+		return "png"
 	case AVIF:
 		return "avif"
 	}
@@ -25,5 +28,5 @@ func (f Format) Ext() string {
 }
 
 func AllFormats() []Format {
-	return []Format{JPEG, WEBP, AVIF}
+	return []Format{JPEG, WEBP, PNG, AVIF}
 }
