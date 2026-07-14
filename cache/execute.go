@@ -119,7 +119,7 @@ func sourceIsNewer(f File, size int) bool {
 	if err != nil {
 		return true
 	}
-	cacheModTime, err := modtime(f.cacheFile(size))
+	cacheModTime, err := modtime(f.cacheFilePathKeepExt(size))
 	if err != nil {
 		return true
 	}

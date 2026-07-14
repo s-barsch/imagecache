@@ -122,7 +122,7 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 		if x := strings.Index(f.path(), dirRegex(CacheSectionFolder)); opt.RerunFolder == CacheSectionFolder && x != -1 {
 			rerunCache = true
 		}
-		if !exists(f.cacheFile(size)) || size == opt.RerunSize || rerunCache ||
+		if !exists(f.cacheFilePathKeepExt(size)) || size == opt.RerunSize || rerunCache ||
 			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) {
 			err := f.createCacheFile(size)
 			if err != nil {
@@ -130,7 +130,7 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 			}
 			continue
 		}
-		Print("skipping: %v -- already cached", f.cacheFile(size))
+		Print("skipping: %v -- already cached", f.cacheFilePathKeepExt(size))
 	}
 
 	return nil
@@ -216,7 +216,7 @@ func (f File) createCacheFile(size int) error {
 		}
 	}
 
-	p := f.cacheFile(size)
+	p := f.cacheFilePath(size, JPEG)
 	out, err := os.Create(p)
 	if err != nil {
 		return err
@@ -236,12 +236,12 @@ func (f File) createCacheFile(size int) error {
 		return err
 	}
 
-	err = wmw.WriteImage(f.cacheFileAvif(size))
+	err = wmw.WriteImage(f.cacheFilePath(size, AVIF))
 	if err != nil {
 		return err
 	}
 
-	Print("cached: %v", f.cacheFileAvif(size))
+	Print("cached: %v", f.cacheFilePath(size, AVIF))
 
 	mw.Destroy()
 	return nil
@@ -300,17 +300,17 @@ func (f File) cacheFileBlur(size int) string {
 }
 */
 
-func (f File) cacheFile(size int) string {
+func (f File) cacheFilePathKeepExt(size int) string {
 	return filepath.Join(f.sizeFolder(size), f.base())
 }
 
-func (f File) cacheFileAvif(size int) string {
-	path := f.cacheFile(size)
+func (f File) cacheFilePath(size int, format Format) string {
+	path := f.cacheFilePathKeepExt(size)
 	i := strings.LastIndex(path, ".")
 	if i <= 0 {
 		panic("invalid path")
 	}
-	return path[:i] + ".avif"
+	return path[:i] + format.Ext()
 }
 
 func (f File) dimsFolder() string {
