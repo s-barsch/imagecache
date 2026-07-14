@@ -122,8 +122,12 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 		if x := strings.Index(f.path(), dirRegex(CacheSectionFolder)); opt.RerunFolder == CacheSectionFolder && x != -1 {
 			rerunCache = true
 		}
+		rerunAll := false
+		if opt.RerunFolder == "all" {
+			rerunAll = true
+		}
 		if !exists(f.cacheFilePath(size, JPEG)) || size == opt.RerunSize || rerunCache ||
-			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) {
+			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) || rerunAll {
 			err := f.createCacheFile(size)
 			if err != nil {
 				return err
