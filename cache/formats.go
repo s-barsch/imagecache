@@ -30,3 +30,17 @@ func (f Format) Ext() string {
 func AllFormats() []Format {
 	return []Format{JPEG, WEBP, PNG, AVIF}
 }
+
+func CacheFormats() []Format {
+	return []Format{JPEG, AVIF}
+}
+
+func (f Format) MagickFormat() string {
+	switch f {
+	case JPEG:
+		return "JPEG"
+	case AVIF:
+		return "AVIF"
+	}
+	panic("unsupported cache format")
+}

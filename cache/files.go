@@ -3,6 +3,7 @@ package cache
 import (
 	//"io/ioutil"
 
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -24,7 +25,7 @@ func isCachedFile(path string) bool {
 		return false
 	}
 	switch strings.ToLower(filepath.Ext(path)) {
-	case ".jpg", ".webp":
+	case ".jpg", ".webp", ".avif":
 		return true
 	case ".txt":
 		return isDimsFile(path)
@@ -161,12 +162,14 @@ func (f File) originalPaths() []string {
 	case ".jpg":
 		noExt := strings.ReplaceAll(path, "_blur", "")
 		return replaceMultiExt(noExt, ".jpg")
+	case ".avif":
+		return replaceMultiExt(path, ".avif")
 	case ".webp":
 		return replaceMultiExt(path, ".webp")
 	case ".txt":
 		return []string{strings.Replace(path, ".txt", "", 1)}
 	}
-	panic("originalPath: invalid file extension")
+	panic(fmt.Sprintf("originalPath: invalid file extension: %v", path))
 }
 
 func replaceMultiExt(path, origExt string) []string {

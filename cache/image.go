@@ -122,7 +122,7 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 		if x := strings.Index(f.path(), dirRegex(CacheSectionFolder)); opt.RerunFolder == CacheSectionFolder && x != -1 {
 			rerunCache = true
 		}
-		if !exists(f.cacheFilePathKeepExt(size)) || size == opt.RerunSize || rerunCache ||
+		if !exists(f.cacheFilePath(size, JPEG)) || size == opt.RerunSize || rerunCache ||
 			isMonth(f.path(), opt.RerunFolder) || sourceIsNewer(f, size) {
 			err := f.createCacheFile(size)
 			if err != nil {
@@ -130,7 +130,7 @@ func CacheImage(f File, locker *locker, opt *Options) error {
 			}
 			continue
 		}
-		Print("skipping: %v -- already cached", f.cacheFilePathKeepExt(size))
+		Print("skipping: %v -- already cached", f.cacheFilePath(size, JPEG))
 	}
 
 	return nil
@@ -195,11 +195,6 @@ func (f File) createCacheFile(size int) error {
 			return err
 		}
 
-		err = mw.SetImageCompressionQuality(90)
-		if err != nil {
-			return err
-		}
-
 		// dont sharpen nexus images with image ratio 4:3
 		if math.Trunc((float64(max(w, h))/float64(min(w, h)))*100) == 133 &&
 			f.base()[:4] < "1903" {
@@ -216,34 +211,39 @@ func (f File) createCacheFile(size int) error {
 		}
 	}
 
-	p := f.cacheFilePath(size, JPEG)
-	out, err := os.Create(p)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	err = mw.WriteImageFile(out)
-	if err != nil {
-		return err
+	compressionSettings := map[Format]uint{
+		JPEG: 90,
+		AVIF: 100,
 	}
 
-	Print("cached: %v", p)
+	for _, format := range CacheFormats() {
+		wmw := mw.Clone()
+		defer wmw.Destroy()
 
-	wmw := mw.Clone()
-	err = wmw.SetImageFormat("AVIF")
-	if err != nil {
-		return err
+		quality, ok := compressionSettings[format]
+		if !ok {
+			panic("compression settings not set")
+		}
+
+		err = mw.SetImageCompressionQuality(quality)
+		if err != nil {
+			return err
+		}
+
+		err = wmw.SetImageFormat(format.MagickFormat())
+		if err != nil {
+			return err
+		}
+
+		p := f.cacheFilePath(size, format)
+		err = wmw.WriteImage(p)
+		if err != nil {
+			return err
+		}
+
+		Print("cached: %v", p)
 	}
 
-	err = wmw.WriteImage(f.cacheFilePath(size, AVIF))
-	if err != nil {
-		return err
-	}
-
-	Print("cached: %v", f.cacheFilePath(size, AVIF))
-
-	mw.Destroy()
 	return nil
 }
 

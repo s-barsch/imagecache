@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/rwcarlsen/goexif/exif"
@@ -102,7 +103,12 @@ func DeleteCached(root string) error {
 		return err
 	}
 	for _, cacheFile := range cacheFiles {
-		if !multiExists(cacheFile.originalPaths()) {
+		shouldDelete := !multiExists(cacheFile.originalPaths())
+		if !shouldDelete {
+			name := filepath.Base(cacheFile.path())
+			shouldDelete = filepath.Ext(name) == ".webp" || strings.Contains(name, "_blur")
+		}
+		if shouldDelete {
 			err = os.Remove(cacheFile.path())
 			if err != nil {
 				Print("unsuccesful in deleting %v", cacheFile.path())
@@ -119,7 +125,7 @@ func sourceIsNewer(f File, size int) bool {
 	if err != nil {
 		return true
 	}
-	cacheModTime, err := modtime(f.cacheFilePathKeepExt(size))
+	cacheModTime, err := modtime(f.cacheFilePath(size, JPEG))
 	if err != nil {
 		return true
 	}
