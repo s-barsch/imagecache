@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/gographics/imagick.v2/imagick"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type Options struct {
@@ -173,15 +173,23 @@ func (f File) createCacheFile(size int) error {
 	}
 
 	if orientation == "landscape" && w > uint(size) || orientation == "portrait" && h > uint(size) {
+		var newW, newH uint
 		if orientation == "portrait" {
-			// height
-			mw = mw.TransformImage("", fmt.Sprintf("x%v", size))
+			// scale by height
+			newH = uint(size)
+			newW = uint(float64(w) * float64(size) / float64(h))
 		} else {
-			// width
-			mw = mw.TransformImage("", fmt.Sprintf("%v", size))
+			// scale by width
+			newW = uint(size)
+			newH = uint(float64(h) * float64(size) / float64(w))
 		}
 
-		err := mw.SetImageCompressionQuality(90)
+		err := mw.ResizeImage(newW, newH, imagick.FILTER_LANCZOS)
+		if err != nil {
+			return err
+		}
+
+		err = mw.SetImageCompressionQuality(90)
 		if err != nil {
 			return err
 		}
