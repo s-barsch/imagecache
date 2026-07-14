@@ -105,7 +105,8 @@ func getOriginals(root string) ([]File, error) {
 			return filepath.SkipDir
 		}
 		f := File(p)
-		if strings.ToLower(f.ext()) == ".jpg" { // what with png?
+		ext := strings.ToLower(f.ext())
+		if ext == ".jpg" || ext == ".png" || ext == ".avif" {
 			fs = append(fs, f)
 		}
 		return nil
@@ -125,6 +126,10 @@ func (f File) path() string {
 
 func (f File) base() string {
 	return filepath.Base(f.path())
+}
+
+func (f File) noExt() string {
+	return strings.TrimSuffix(f.base(), f.ext())
 }
 
 func (f File) ext() string {

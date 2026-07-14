@@ -13,7 +13,7 @@ func main() {
 	rerunFolder := flag.String("rerun", "", "which folder should be freshly cached? eg: 17-07. write \"all\" for everything")
 	rerunSize := flag.Int("size", 0, "specify if a specific size should be recached")
 	rerunDims := flag.Bool("rerunDims", false, "recreate dimension files for all images")
-	pathsCfg := flag.String("config", "./paths.cfg", "provide path to paths.cfg")
+	pathsCfg := flag.String("config", "~/code/imagecache/paths.cfg", "provide path to paths.cfg")
 	flag.Parse()
 
 	opt := &cache.Options{

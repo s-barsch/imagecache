@@ -70,7 +70,7 @@ func CacheOriginals(ctx context.Context, root string, opt *Options) error {
 
 func renameAndCache(f File, locker *locker, opt *Options) error {
 	var err error
-	if f.base() != "cover.jpg" && !validFilename.MatchString(f.base()) {
+	if f.noExt() != "cover" && !validFilename.MatchString(f.base()) {
 		f, err = renameImage(f)
 		if err != nil {
 			return err
@@ -150,7 +150,7 @@ func (f File) modtime() (time.Time, error) {
 func renameImage(f File) (File, error) {
 	nn, err := readExifDate(f.path())
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("rename image: %w", err)
 	}
 	nf := File(filepath.Join(f.dir(), nn))
 
