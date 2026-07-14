@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"g.rg-s.com/imagecache/cache"
@@ -43,6 +44,13 @@ func cachePaths(paths []string, opt *cache.Options) error {
 }
 
 func readPaths(pathsCfg string) ([]string, error) {
+	if strings.HasPrefix(pathsCfg, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			pathsCfg = filepath.Join(home, pathsCfg[2:])
+		}
+	}
+	
 	b, err := os.ReadFile(pathsCfg)
 	if err != nil {
 		return nil, fmt.Errorf("provide a paths.cfg")
