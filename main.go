@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"g.rg-s.com/imagecache/cache"
+	"g.rg-s.com/imgcache/cache"
 )
 
 func main() {
 	rerunFolder := flag.String("rerun", "", "which folder should be freshly cached? eg: 17-07. write \"all\" for everything")
 	rerunSize := flag.Int("size", 0, "specify if a specific size should be recached")
 	rerunDims := flag.Bool("rerunDims", false, "recreate dimension files for all images")
-	pathsCfg := flag.String("config", "~/code/imagecache/paths.cfg", "provide path to paths.cfg")
+	pathsCfg := flag.String("config", "~/code/imgcache/paths.cfg", "provide path to paths.cfg")
 	flag.Parse()
 
 	opt := &cache.Options{
@@ -50,7 +50,7 @@ func readPaths(pathsCfg string) ([]string, error) {
 			pathsCfg = filepath.Join(home, pathsCfg[2:])
 		}
 	}
-	
+
 	b, err := os.ReadFile(pathsCfg)
 	if err != nil {
 		return nil, fmt.Errorf("provide a paths.cfg")

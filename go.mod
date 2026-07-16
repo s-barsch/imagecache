@@ -1,4 +1,4 @@
-module g.rg-s.com/imagecache
+module g.rg-s.com/imgcache
 
 go 1.25.1
 
@@ -9,4 +9,4 @@ require (
 
 require golang.org/x/sync v0.19.0
 
-replace g.rg-s.com/imagecache/cache => ./cache
+replace g.rg-s.com/imgcache/cache => ./cache

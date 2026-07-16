@@ -1,4 +1,4 @@
-# imagecache
+# imgcache
 
 Imagemagick 7 must be installed and accessible.
 
